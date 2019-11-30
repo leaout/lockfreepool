@@ -55,8 +55,8 @@ void tpool_thread(void *arg) {
 
     while (pthread->m_brunning) {
         //thread exit
-        if (pthread->queue_empty() && !pthread->m_brunning) {
-            std::this_thread::sleep_for(chrono::microseconds(10));
+        if (pthread->queue_empty()) {
+            std::this_thread::sleep_for(chrono::milliseconds(1));
             continue;
         }
 

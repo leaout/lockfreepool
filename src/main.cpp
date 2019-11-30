@@ -22,18 +22,18 @@ void addmyfunc(void *args) {
     CThreadPool* lfttest = (CThreadPool*)args;
 
 //    while (true) {
-        for (int i = 0; i <28495; ++i) {
-            auto func = std::bind(testfun, i);
-            if (!lfttest->add_work(func)) {
-                std::this_thread::sleep_for(chrono::milliseconds(10));
-                --i;
-                continue;
-                //return -1;
-            }
+    for (int i = 0; i <28495; ++i) {
+        auto func = std::bind(testfun, i);
+        if (!lfttest->add_work(func)) {
+            std::this_thread::sleep_for(chrono::milliseconds(10));
+            --i;
+            continue;
+            //return -1;
         }
-        //break;
-        std::this_thread::sleep_for(chrono::microseconds(1));
-        std::cout << "addmyfunc exit!" << std::endl;
+    }
+    //break;
+    std::this_thread::sleep_for(chrono::microseconds(1));
+    std::cout << "addmyfunc exit!" << std::endl;
 //    }
 }
 
