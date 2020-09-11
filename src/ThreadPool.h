@@ -13,60 +13,60 @@
 #include <atomic>
 #include <thread>
 #include <functional>
+#include <vector>
 
 using namespace std;
-enum schedule_type {
+enum class ScheduleType {
     ROUND_ROBIN, 
     LEAST_LOAD	  
 };
-const int MAX_THREAD_NUM  = 512;
+const int kMaxThreadNum  = 512;
 
 class CThreadPool;
 
 class CthreadCircleQueue {
   public:
     CthreadCircleQueue();
-    CthreadCircleQueue(unsigned int queue_size);
+    CthreadCircleQueue(uint32_t queue_size);
     ~CthreadCircleQueue();
-    int get_task_size();
+    uint32_t get_task_size();
     bool queue_empty();
     bool queue_full();
-    unsigned int val_offset(unsigned int val);
+    uint32_t val_offset(uint32_t val);
   public:
     CThreadPool* m_pthread_pool;
   public:
-    unsigned int m_nin;
-    unsigned int  m_nout;
-    std::atomic_uint m_ntask_size;
-    std::atomic_uint m_nqueue_size;
-    unsigned int m_nqueue_mask;
-    bool m_brunning;
-    std::function<void()>* m_ptask_queue;
+    volatile uint32_t m_nin;
+    volatile uint32_t m_nout;
+    atomic_int m_ntask_size;
+    atomic_int m_nqueue_size;
+    uint32_t m_nqueue_mask;
+    volatile bool m_brunning;
+    function<void()>* m_ptask_queue;
 };
-
 
 class CThreadPool {
   public:
     CThreadPool();
     ~CThreadPool();
     //ntreads,scheduletype
-    bool init(int ntreads, int scheduletype, int nqsize);
+    bool init(int thread_size, ScheduleType schedule_type, int queue_size);
     bool add_work(std::function<void()>);
-    std::function<void()> get_work(CthreadCircleQueue *pthread);
-
+    function<void()> get_work(CthreadCircleQueue *pthread);
+    void stop_and_join();
     void show_status();
   private:
-    bool dispatch_work2thread(CthreadCircleQueue *pthread, std::function<void()> routine);
+    bool dispatch_work2thread(CthreadCircleQueue *pthread, std::function<void()>* routine);
 
     CthreadCircleQueue* round_robin_schedule();
     CthreadCircleQueue* least_load_schedule();
-
+    bool stop();
   private:
     list<CthreadCircleQueue*> m_list_threads;		   //
     int m_nthread_num;
-
-    int m_schedule_type;			 
-    int m_cur_thread_Index;			
+    vector<thread> m_threads;
+    ScheduleType m_schedule_type;
+    int m_cur_thread_Index;
 };
 
 void tpool_thread(void *arg);

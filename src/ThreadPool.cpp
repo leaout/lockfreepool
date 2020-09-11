@@ -18,7 +18,8 @@ CthreadCircleQueue::~CthreadCircleQueue() {
     if (m_ptask_queue)
         delete[] m_ptask_queue;
 }
-int CthreadCircleQueue::get_task_size() {
+
+uint32_t CthreadCircleQueue::get_task_size() {
     return m_ntask_size;
 }
 bool CthreadCircleQueue::queue_empty() {
@@ -48,12 +49,10 @@ std::function<void()> CThreadPool::get_work(CthreadCircleQueue *pthread) {
     return work;
 }
 
-
 void tpool_thread(void *arg) {
     CthreadCircleQueue *pthread = (CthreadCircleQueue *)arg;
-//    tpool_work_t *work = NULL;
 
-    while (pthread->m_brunning) {
+    while (pthread->m_brunning || !pthread->queue_empty()) {
         //thread exit
         if (pthread->queue_empty()) {
             std::this_thread::sleep_for(chrono::milliseconds(1));
@@ -68,7 +67,7 @@ void tpool_thread(void *arg) {
 }
 
 CThreadPool::CThreadPool() : m_nthread_num(0)
-    , m_schedule_type(ROUND_ROBIN),m_cur_thread_Index(0) {
+    , m_schedule_type(ScheduleType::ROUND_ROBIN),m_cur_thread_Index(0) {
     m_list_threads.clear();
 }
 
@@ -82,13 +81,14 @@ CThreadPool::~CThreadPool() {
     }
 }
 
-bool CThreadPool::init(int ntreads, int scheduletype,int nqsize) {
+bool CThreadPool::init(int ntreads, ScheduleType schedule_type,int nqsize) {
 
     if (ntreads <= 0) {
         ntreads = std::thread::hardware_concurrency();
-    } else if (ntreads > MAX_THREAD_NUM) {
+    } else if (ntreads > kMaxThreadNum) {
         return false;
     }
+    m_threads.resize(ntreads);
     for (int i = 0; i < ntreads; ++i) {
         CthreadCircleQueue* p = new CthreadCircleQueue(nqsize);
         if (p != NULL) {
@@ -96,14 +96,14 @@ bool CThreadPool::init(int ntreads, int scheduletype,int nqsize) {
         }
     }
     m_nthread_num = ntreads;
-    m_schedule_type = scheduletype;
-
+    m_schedule_type = schedule_type;
+    int index = 0;
     for (list<CthreadCircleQueue*>::iterator it = m_list_threads.begin(); it != m_list_threads.end(); ++it) {
         (*it)->m_pthread_pool = this;
         (*it)->m_brunning = true;
 
         std::thread th(tpool_thread, (void *)(*it));
-        th.detach();
+        m_threads[index++].swap(th);
     }
 
     return true;
@@ -111,7 +111,7 @@ bool CThreadPool::init(int ntreads, int scheduletype,int nqsize) {
 
 bool CThreadPool::add_work(std::function<void()> work) {
     CthreadCircleQueue *pthread = NULL;
-    if (LEAST_LOAD == m_schedule_type) {
+    if (ScheduleType::LEAST_LOAD == m_schedule_type) {
         pthread = least_load_schedule();
     } else {
         pthread = round_robin_schedule();
@@ -119,19 +119,43 @@ bool CThreadPool::add_work(std::function<void()> work) {
     if (pthread == NULL)
         return false;
 
-    return dispatch_work2thread(pthread, work);
+    return dispatch_work2thread(pthread, &work);
 }
 
-void CThreadPool::show_status() {
-    for (list<CthreadCircleQueue*>::iterator it = m_list_threads.begin(); it != m_list_threads.end(); ++it) {
-        printf("thread_queue_task[%d]\n", (*it)->get_task_size());
-        printf("is runing[%d]\n", (*it)->m_brunning);
-        printf("m_nin[%d]\n", (*it)->m_nin);
-        printf("m_nout[%d]\n", (*it)->m_nout);
+void CThreadPool::stop_and_join(){
+    for(;;){
+        if(stop()) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds (10));
+    }
+    for(auto&thread: m_threads){
+        thread.join();
     }
 }
 
-bool CThreadPool::dispatch_work2thread(CthreadCircleQueue *pthread, std::function<void()> routine) {
+bool CThreadPool::stop(){
+    for(auto&val : m_list_threads){
+        if(val->queue_empty()){
+            val->m_brunning = false;
+        } else{
+            return false;
+        }
+    }
+    return true;
+}
+
+#include <iostream>
+void CThreadPool::show_status() {
+    std::cout <<"------------------------------------------" << std::endl;
+    for (list<CthreadCircleQueue*>::iterator it = m_list_threads.begin(); it != m_list_threads.end(); ++it) {
+        std::cout <<"thread_queue_task :"<< (*it)->get_task_size() << std::endl;
+        std::cout <<"is runing :" << (*it)->m_brunning<< std::endl;
+        std::cout <<"m_nin :" << (*it)->m_nin << std::endl;
+        std::cout <<"m_nout :" << (*it)->m_nout << std::endl;
+    }
+    std::cout <<"------------------------------------------" << std::endl;
+}
+
+bool CThreadPool::dispatch_work2thread(CthreadCircleQueue *pthread, std::function<void()>* routine) {
 
     if (pthread != NULL && pthread->queue_full()) {
         return false;
@@ -139,7 +163,7 @@ bool CThreadPool::dispatch_work2thread(CthreadCircleQueue *pthread, std::functio
 //    tpool_work_t *work = NULL;
 
     auto work = &pthread->m_ptask_queue[pthread->m_nin];
-    *work = routine;
+    *work = *routine;
 
     ++pthread->m_ntask_size;
     pthread->m_nin = pthread->val_offset(++pthread->m_nin);

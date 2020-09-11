@@ -1,6 +1,6 @@
-# lfthreadpool
+# lockfreepoll
 
-lfthreadpool is a lock-free thread pool, it helps process tasks quickly.
+lockfreepoll is a lock-free thread pool, it helps process tasks quickly.
 
 ## Features
 
