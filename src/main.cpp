@@ -16,7 +16,7 @@ void testfun() {
     if (g_ntest % 500000 == 0) {
         auto elapsed = std::chrono::high_resolution_clock::now() - kStart;
         int mirco_time = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-        std::cout << g_ntest <<"; testfun speed "
+        std::cout << g_ntest <<";time:"<<mirco_time<<"; testfun speed "
                   << (double) g_ntest / mirco_time
                   << " ll/ms\n";
     }
@@ -26,8 +26,11 @@ void addmyfunc(void *args) {
     CThreadPool* lfttest = (CThreadPool*)args;
 
     auto func = std::bind(testfun);
+    Task task;
+    task.task_func = func;
+    task.msg = "hello";
     for (int i = 0; i <10000*10000; ++i) {
-            if (!lfttest->add_work(func)) {
+            if (!lfttest->add_work(task)) {
                 --i;
                 continue;
             }

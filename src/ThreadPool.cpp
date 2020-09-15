@@ -11,7 +11,7 @@ CthreadCircleQueue::CthreadCircleQueue(unsigned int queue_size):
     m_brunning(false),m_ntask_size(0)  {
     m_nqueue_size = queue_size;
     m_nqueue_mask = m_nqueue_size - 1;
-    m_ptask_queue = new function<void()>[m_nqueue_size];
+    m_ptask_queue = new Task[queue_size];
 }
 
 CthreadCircleQueue::~CthreadCircleQueue() {
@@ -34,11 +34,11 @@ unsigned int CthreadCircleQueue::val_offset(unsigned int val) {
     return (m_nqueue_mask & val);
 }
 
-std::function<void()> CThreadPool::get_work(CthreadCircleQueue *pthread) {
+Task CThreadPool::get_work(CthreadCircleQueue *pthread) {
 //    std::function<void()> work = NULL;
 
     if (pthread->get_task_size() <= 0)
-        return nullptr;
+        return Task(false);
 
     //prefetch work
     auto work = pthread->m_ptask_queue[pthread->m_nout];
@@ -60,8 +60,8 @@ void tpool_thread(void *arg) {
         }
 
         auto work = pthread->m_pthread_pool->get_work(pthread);
-        if (work != nullptr) {
-            work();
+        if (work.valid) {
+            work.task_func();
         }
     }
 }
@@ -109,7 +109,7 @@ bool CThreadPool::init(int ntreads, ScheduleType schedule_type,int nqsize) {
     return true;
 }
 
-bool CThreadPool::add_work(std::function<void()> work) {
+bool CThreadPool::add_work(Task &task) {
     CthreadCircleQueue *pthread = NULL;
     if (ScheduleType::LEAST_LOAD == m_schedule_type) {
         pthread = least_load_schedule();
@@ -119,7 +119,7 @@ bool CThreadPool::add_work(std::function<void()> work) {
     if (pthread == NULL)
         return false;
 
-    return dispatch_work2thread(pthread, &work);
+    return dispatch_work2thread(pthread, task);
 }
 
 void CThreadPool::stop_and_join(){
@@ -155,15 +155,14 @@ void CThreadPool::show_status() {
     std::cout <<"------------------------------------------" << std::endl;
 }
 
-bool CThreadPool::dispatch_work2thread(CthreadCircleQueue *pthread, std::function<void()>* routine) {
+bool CThreadPool::dispatch_work2thread(CthreadCircleQueue *pthread, Task &task) {
 
     if (pthread != NULL && pthread->queue_full()) {
         return false;
     }
-//    tpool_work_t *work = NULL;
 
     auto work = &pthread->m_ptask_queue[pthread->m_nin];
-    *work = *routine;
+    *work = task;
 
     ++pthread->m_ntask_size;
     pthread->m_nin = pthread->val_offset(++pthread->m_nin);

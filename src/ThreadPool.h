@@ -22,6 +22,15 @@ enum class ScheduleType {
 };
 const int kMaxThreadNum  = 512;
 
+struct Task{
+    Task() = default;
+    Task(bool val):valid(val){
+    }
+    function<void()> task_func;
+    bool valid = true;
+    string msg;
+};
+
 class CThreadPool;
 
 class CthreadCircleQueue {
@@ -42,21 +51,23 @@ class CthreadCircleQueue {
     atomic_int m_nqueue_size;
     uint32_t m_nqueue_mask;
     volatile bool m_brunning;
-    function<void()>* m_ptask_queue;
+    Task* m_ptask_queue = nullptr;
 };
 
 class CThreadPool {
   public:
     CThreadPool();
     ~CThreadPool();
+
     //ntreads,scheduletype
     bool init(int thread_size, ScheduleType schedule_type, int queue_size);
-    bool add_work(std::function<void()>);
-    function<void()> get_work(CthreadCircleQueue *pthread);
+    bool add_work(Task &task);
+    Task get_work(CthreadCircleQueue *pthread);
     void stop_and_join();
     void show_status();
-  private:
-    bool dispatch_work2thread(CthreadCircleQueue *pthread, std::function<void()>* routine);
+
+private:
+    bool dispatch_work2thread(CthreadCircleQueue *pthread, Task &task);
 
     CthreadCircleQueue* round_robin_schedule();
     CthreadCircleQueue* least_load_schedule();
