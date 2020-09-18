@@ -23,17 +23,17 @@ void testfun() {
 }
 
 void addmyfunc(void *args) {
-    CThreadPool* lfttest = (CThreadPool*)args;
+    CThreadPool *lfttest = (CThreadPool *) args;
 
     auto func = std::bind(testfun);
     Task task;
     task.task_func = func;
     task.msg = "hello";
-    for (int i = 0; i <10000*10000; ++i) {
-            if (!lfttest->add_work(task)) {
-                --i;
-                continue;
-            }
+    for (int i = 0; i < 10000 * 10000; ++i) {
+        if (!lfttest->add_work(task)) {
+            --i;
+            continue;
+        }
     }
     std::cout << "addmyfunc exit!" << std::endl;
 }
