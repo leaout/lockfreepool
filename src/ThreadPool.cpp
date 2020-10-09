@@ -76,7 +76,7 @@ CThreadPool::~CThreadPool() {
     if (m_list_threads.size() == 0) {
         return;
     }
-    for (list<CthreadCircleQueue*>::iterator it = m_list_threads.begin(); it != m_list_threads.end(); ++it) {
+    for (vector<CthreadCircleQueue*>::iterator it = m_list_threads.begin(); it != m_list_threads.end(); ++it) {
         (*it)->m_brunning = true;
     }
 }
@@ -92,13 +92,13 @@ bool CThreadPool::init(int ntreads, ScheduleType schedule_type,int nqsize) {
     for (int i = 0; i < ntreads; ++i) {
         CthreadCircleQueue* p = new CthreadCircleQueue(nqsize);
         if (p != NULL) {
-            m_list_threads.push_back(p);
+            m_list_threads.emplace_back(p);
         }
     }
     m_nthread_num = ntreads;
     m_schedule_type = schedule_type;
     int index = 0;
-    for (list<CthreadCircleQueue*>::iterator it = m_list_threads.begin(); it != m_list_threads.end(); ++it) {
+    for (vector<CthreadCircleQueue*>::iterator it = m_list_threads.begin(); it != m_list_threads.end(); ++it) {
         (*it)->m_pthread_pool = this;
         (*it)->m_brunning = true;
 
@@ -146,7 +146,7 @@ bool CThreadPool::stop(){
 #include <iostream>
 void CThreadPool::show_status() {
     std::cout <<"------------------------------------------" << std::endl;
-    for (list<CthreadCircleQueue*>::iterator it = m_list_threads.begin(); it != m_list_threads.end(); ++it) {
+    for (vector<CthreadCircleQueue*>::iterator it = m_list_threads.begin(); it != m_list_threads.end(); ++it) {
         std::cout <<"thread_queue_task :"<< (*it)->get_task_size() << std::endl;
         std::cout <<"is runing :" << (*it)->m_brunning<< std::endl;
         std::cout <<"m_nin :" << (*it)->m_nin << std::endl;
@@ -173,7 +173,7 @@ bool CThreadPool::dispatch_work2thread(CthreadCircleQueue *pthread, Task &task) 
 CthreadCircleQueue* CThreadPool::round_robin_schedule() {
     m_cur_thread_Index = (m_cur_thread_Index + 1) % m_nthread_num;
     int i = 0;
-    for (list<CthreadCircleQueue*>::iterator it = m_list_threads.begin(); it != m_list_threads.end(); ++it) {
+    for (vector<CthreadCircleQueue*>::iterator it = m_list_threads.begin(); it != m_list_threads.end(); ++it) {
         if (i++ == m_cur_thread_Index)
             return (*it);
     }
@@ -182,7 +182,7 @@ CthreadCircleQueue* CThreadPool::round_robin_schedule() {
 CthreadCircleQueue* CThreadPool::least_load_schedule() {
 
     CthreadCircleQueue* pret = NULL;
-    for (list<CthreadCircleQueue*>::iterator it = m_list_threads.begin(); it != m_list_threads.end(); ++it) {
+    for (vector<CthreadCircleQueue*>::iterator it = m_list_threads.begin(); it != m_list_threads.end(); ++it) {
         if (pret == NULL)
             pret = (*it);
 

@@ -73,7 +73,7 @@ private:
     CthreadCircleQueue* least_load_schedule();
     bool stop();
   private:
-    list<CthreadCircleQueue*> m_list_threads;		   //
+    vector<CthreadCircleQueue*> m_list_threads;		   //
     int m_nthread_num;
     vector<thread> m_threads;
     ScheduleType m_schedule_type;
