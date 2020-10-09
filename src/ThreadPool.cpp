@@ -124,8 +124,9 @@ bool CThreadPool::add_work(Task &task) {
 
 void CThreadPool::stop_and_join(){
     for(;;){
+        std::this_thread::yield();
+        std::this_thread::sleep_for(std::chrono::milliseconds (50));
         if(stop()) break;
-        std::this_thread::sleep_for(std::chrono::milliseconds (10));
     }
     for(auto&thread: m_threads){
         thread.join();

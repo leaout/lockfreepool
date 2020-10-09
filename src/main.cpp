@@ -29,7 +29,7 @@ void addmyfunc(void *args) {
     Task task;
     task.task_func = func;
     task.msg = "hello";
-    for (int i = 0; i < 10000 * 10000; ++i) {
+    for (int i = 0; i < 100 * 10000; ++i) {
         if (!lfttest->add_work(task)) {
             --i;
             continue;
@@ -48,8 +48,8 @@ int main(int argc, char**argv) {
 
     auto elapsed = std::chrono::high_resolution_clock::now() - start;
     std::cout << "waited for "
-              << std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count()
-              << " microseconds\n";
+              << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count()
+              << " ms\n";
 }
 
 void lft_pool_test() {
@@ -57,6 +57,6 @@ void lft_pool_test() {
     lfttest.init(0, ScheduleType::LEAST_LOAD, 1<<10);
     std::thread th(addmyfunc, (void*)&lfttest);
     th.detach();
-    std::this_thread::sleep_for(std::chrono::seconds(50000));
-//    lfttest.stop_and_join();
+//    std::this_thread::sleep_for(std::chrono::seconds(1));
+    lfttest.stop_and_join();
 }
