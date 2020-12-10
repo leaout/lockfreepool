@@ -41,12 +41,15 @@ Task CThreadPool::get_work(CthreadCircleQueue *pthread) {
         return Task(false);
 
     //prefetch work
-    auto work = pthread->m_ptask_queue[pthread->m_nout];
+    Task ret_work;
+    ret_work.swap(pthread->m_ptask_queue[pthread->m_nout]);
+//    auto& work = pthread->m_ptask_queue[pthread->m_nout];
+//    ret_work.swap(work);
     --pthread->m_ntask_size;
     pthread->m_nout = pthread->val_offset(++pthread->m_nout);
 //    ++pthread->m_nout;
 
-    return work;
+    return ret_work;
 }
 
 void tpool_thread(void *arg) {

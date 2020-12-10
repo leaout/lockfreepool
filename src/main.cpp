@@ -28,6 +28,7 @@ void addmyfunc(void *args) {
     auto func = std::bind(testfun);
     Task task;
     task.task_func = func;
+
     task.msg = "hello";
     for (int i = 0; i < 100 * 10000; ++i) {
         if (!lfttest->add_work(task)) {
@@ -35,6 +36,8 @@ void addmyfunc(void *args) {
             continue;
         }
     }
+    function<void()> temp;
+    task.task_func.swap(temp);
     std::cout << "addmyfunc exit!" << std::endl;
 }
 

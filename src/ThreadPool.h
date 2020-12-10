@@ -26,6 +26,11 @@ struct Task{
     Task() = default;
     Task(bool val):valid(val){
     }
+    void swap(Task& t){
+        msg.swap(t.msg);
+        task_func.swap(t.task_func);
+        valid = t.valid;
+    }
     function<void()> task_func;
     bool valid = true;
     string msg;
