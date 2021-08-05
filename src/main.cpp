@@ -44,7 +44,8 @@ void addmyfunc(void *args) {
 void lft_pool_test();
 
 int main(int argc, char**argv) {
-
+    string tmp;
+    tmp.resize(10,0);
     auto start = std::chrono::high_resolution_clock::now();
     //tpool_destroy(tpool, 1);
     lft_pool_test();
