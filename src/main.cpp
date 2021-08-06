@@ -6,6 +6,20 @@ using namespace std;
 #define WORK_QUEUE_POWER 10
 
 
+class TestTask :public ITask{
+public:
+    virtual ~TestTask(){}
+
+    bool on_init() override {
+        return true;
+    }
+    void on_process() override{
+        int a = 1+2;
+    }
+    void on_end() override {
+        delete this;
+    }
+};
 std::atomic<int> g_ntest(0);
 
 auto kStart = std::chrono::high_resolution_clock::now();
@@ -25,19 +39,16 @@ void testfun() {
 void addmyfunc(void *args) {
     CThreadPool *lfttest = (CThreadPool *) args;
 
-    auto func = std::bind(testfun);
-    Task task;
-    task.task_func = func;
 
-    task.msg = "hello";
+
     for (int i = 0; i < 100 * 10000; ++i) {
+        TestTask* task = new TestTask;
         if (!lfttest->add_work(task)) {
             --i;
             continue;
         }
     }
-    function<void()> temp;
-    task.task_func.swap(temp);
+
     std::cout << "addmyfunc exit!" << std::endl;
 }
 
@@ -58,7 +69,7 @@ int main(int argc, char**argv) {
 
 void lft_pool_test() {
     CThreadPool lfttest;
-    lfttest.init(0, ScheduleType::LEAST_LOAD, 1<<10);
+    lfttest.init(1, ScheduleType::LEAST_LOAD, 10);
     std::thread th(addmyfunc, (void*)&lfttest);
     th.detach();
 //    std::this_thread::sleep_for(std::chrono::seconds(1));

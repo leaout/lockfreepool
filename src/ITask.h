@@ -15,6 +15,7 @@ public:
 
     virtual ~ITask(){}
 
+    virtual bool on_init() = 0;
     virtual void on_process() = 0;
     virtual void on_end() = 0;
 protected:
