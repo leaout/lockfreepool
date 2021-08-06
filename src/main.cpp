@@ -40,6 +40,7 @@ void addmyfunc(void *args) {
     CThreadPool *lfttest = (CThreadPool *) args;
 
 
+    auto start = std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < 100 * 10000; ++i) {
         TestTask* task = new TestTask;
@@ -49,6 +50,11 @@ void addmyfunc(void *args) {
         }
     }
 
+    auto elapsed = std::chrono::high_resolution_clock::now() - start;
+    std::cout << "waited for "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count()
+              << " ms\n";
+
     std::cout << "addmyfunc exit!" << std::endl;
 }
 
@@ -57,21 +63,19 @@ void lft_pool_test();
 int main(int argc, char**argv) {
     string tmp;
     tmp.resize(10,0);
-    auto start = std::chrono::high_resolution_clock::now();
+
     //tpool_destroy(tpool, 1);
     lft_pool_test();
 
-    auto elapsed = std::chrono::high_resolution_clock::now() - start;
-    std::cout << "waited for "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count()
-              << " ms\n";
+
 }
 
 void lft_pool_test() {
     CThreadPool lfttest;
-    lfttest.init(1, ScheduleType::LEAST_LOAD, 10);
+    lfttest.init(6, ScheduleType::LEAST_LOAD, 10);
     std::thread th(addmyfunc, (void*)&lfttest);
-    th.detach();
+    th.join();
 //    std::this_thread::sleep_for(std::chrono::seconds(1));
-    lfttest.stop_and_join();
+    lfttest.stop();
+    lfttest.join();
 }

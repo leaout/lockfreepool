@@ -32,14 +32,15 @@ class CThreadPool {
     bool init(int thread_size, ScheduleType schedule_type, int power);
     bool add_work(ITask *task);
 
-    void stop_and_join();
+    void stop();
+    void join();
     void show_status();
 
 private:
 
     ThreadWithQueue* round_robin_schedule();
     ThreadWithQueue* least_load_schedule();
-    bool stop();
+
   private:
     vector<ThreadWithQueue*> m_thread_queues;		   //
     int m_nthread_num;

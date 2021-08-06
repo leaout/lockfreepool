@@ -26,15 +26,22 @@ public:
         thread th(&ThreadWithQueue::thread_func,this);
         m_th.swap(th);
     }
+
     void stop(){
         m_running.store(false);
+    }
+
+    void join(){
         if(m_th.joinable()){
             m_th.join();
         }
     }
 
     bool add_task(ITask* task){
-        m_queue.add_one(task);
+        if(m_running){
+           return m_queue.add_one(task);
+        }
+        return false;
     }
 
     uint32_t get_task_size() {

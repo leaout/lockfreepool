@@ -49,23 +49,18 @@ bool CThreadPool::add_work(ITask *task) {
     return false;
 }
 
-void CThreadPool::stop_and_join(){
-
+void CThreadPool::stop(){
     for(auto&queue : m_thread_queues){
         queue->stop();
     }
 }
 
-bool CThreadPool::stop(){
+void CThreadPool::join(){
     for(auto&queue : m_thread_queues){
-        if(queue->queue_empty()){
-            queue->stop();
-        } else{
-            return false;
-        }
+        queue->join();
     }
-    return true;
 }
+
 
 #include <iostream>
 void CThreadPool::show_status() {
