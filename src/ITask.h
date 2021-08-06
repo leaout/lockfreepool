@@ -9,26 +9,16 @@
 #include <atomic>
 using namespace std;
 
-enum class TaskStatus{
-    Pending,
-    Processing,
-    Skip
-};
-
 class ITask {
 public:
     ITask() = default;
-    explicit ITask(bool val):valid(val){
-    }
 
     virtual ~ITask(){}
 
     virtual void on_process() = 0;
     virtual void on_end() = 0;
 protected:
-    bool valid = true;
-    string msg;
-    atomic<TaskStatus> m_status;
+
 };
 
 
