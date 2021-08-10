@@ -17,8 +17,6 @@ enum class TaskStatus {
     Free
 };
 
-#define MSG_LEN = 32;
-
 template<class T>
 class Slot {
 public:
@@ -56,15 +54,42 @@ public:
         return (get_task_size() == m_nqueue_size);
     }
 
-    T *get_one() {
+    T *prefetch_one(TaskStatus &status) {
+        if (get_task_size() <= 0)
+            return nullptr;
+
+        //prefetch work
+        auto &slot = m_queue[m_tail];
+        T *ret = slot.m_task;
+        status = slot.m_status;
+
+        return ret;
+    }
+
+    void erase_tail(){
+        if (get_task_size() <= 0)
+            return ;
+
+        auto &slot = m_queue[m_tail];
+
+        slot.m_status = TaskStatus::Free;
+
+        slot.m_task = nullptr;
+        --m_ntask_size;
+        m_tail = val_offset(++m_tail);
+
+        return ;
+    }
+
+    T *get_one(TaskStatus& status) {
         if (get_task_size() <= 0)
             return nullptr;
 
         //prefetch work
         auto &slot = m_queue[m_tail];
 
+        status = slot.m_status;
         slot.m_status = TaskStatus::Free;
-//        slot.msg = {0};
 
         T *ret = slot.m_task;
 

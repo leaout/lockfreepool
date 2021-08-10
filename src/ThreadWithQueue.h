@@ -65,19 +65,20 @@ private:
                 std::this_thread::sleep_for(chrono::milliseconds(1));
                 continue;
             }
-//            std::this_thread::sleep_for(chrono::seconds (2));
-            auto work = m_queue.get_one();
+            TaskStatus status = TaskStatus::Skip;
+            auto work = m_queue.get_one(status);
             if (work) {
-                ++m_call_count;
-                if(work->on_init()){
+
+                if(status != TaskStatus::Skip && work->on_init()){
                     work->on_process();
-                    work->on_end();
                 }
+
+                work->on_end();
             }
         }
     }
 private:
-    int m_call_count = 0;
+
     CircleQueue<ITask> m_queue;
     thread m_th;
     atomic<bool> m_running;
