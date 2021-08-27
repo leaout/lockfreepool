@@ -3,8 +3,6 @@
 #include "ThreadPool.h"
 
 using namespace std;
-#define WORK_QUEUE_POWER 10
-
 
 class TestTask :public ITask{
 public:
@@ -20,31 +18,15 @@ public:
         delete this;
     }
 };
-std::atomic<int> g_ntest(0);
-
-auto kStart = std::chrono::high_resolution_clock::now();
-
-void testfun() {
-
-    ++g_ntest;
-    if (g_ntest % 500000 == 0) {
-        auto elapsed = std::chrono::high_resolution_clock::now() - kStart;
-        int mirco_time = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-        std::cout << g_ntest <<";time:"<<mirco_time<<"; testfun speed "
-                  << (double) g_ntest / mirco_time
-                  << " ll/ms\n";
-    }
-}
 
 void addmyfunc(void *args) {
-    CThreadPool *lfttest = (CThreadPool *) args;
-
+    lockfreepool::CThreadPool *th_pool = (lockfreepool::CThreadPool *) args;
 
     auto start = std::chrono::high_resolution_clock::now();
     int total_count = 1000 * 10000;
     for (int i = 0; i < total_count; ++i) {
         TestTask* task = new TestTask;
-        if (!lfttest->add_work(task)) {
+        if (!th_pool->add_work(task)) {
             --i;
             continue;
         }
@@ -57,19 +39,18 @@ void addmyfunc(void *args) {
               << "qps :" << (double)total_count/std::chrono::duration_cast<std::chrono::seconds>(elapsed).count() << " /s"<<std::endl;
 }
 
-void lft_pool_test();
+void lft_pool_test() {
+    lockfreepool::CThreadPool th_pool;
+    th_pool.init(6, lockfreepool::ScheduleType::LEAST_LOAD, 10);
+    std::thread th(addmyfunc, (void*)&th_pool);
+    th.join();
+
+    th_pool.stop();
+    th_pool.join();
+}
 
 int main(int argc, char**argv) {
 
     lft_pool_test();
 }
 
-void lft_pool_test() {
-    CThreadPool lfttest;
-    lfttest.init(6, ScheduleType::LEAST_LOAD, 10);
-    std::thread th(addmyfunc, (void*)&lfttest);
-    th.join();
-//    std::this_thread::sleep_for(std::chrono::seconds(1));
-    lfttest.stop();
-    lfttest.join();
-}

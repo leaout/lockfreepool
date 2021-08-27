@@ -22,6 +22,7 @@ class Slot {
 public:
     T *m_task = nullptr;
     char msg[32] = {};
+    //monitor task process status or control skip/stop
     atomic<TaskStatus> m_status;
 };
 
