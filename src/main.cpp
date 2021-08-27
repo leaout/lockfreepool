@@ -41,8 +41,8 @@ void addmyfunc(void *args) {
 
 
     auto start = std::chrono::high_resolution_clock::now();
-
-    for (int i = 0; i < 100 * 10000; ++i) {
+    int total_count = 1000 * 10000;
+    for (int i = 0; i < total_count; ++i) {
         TestTask* task = new TestTask;
         if (!lfttest->add_work(task)) {
             --i;
@@ -53,9 +53,8 @@ void addmyfunc(void *args) {
     auto elapsed = std::chrono::high_resolution_clock::now() - start;
     std::cout << "waited for "
               << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count()
-              << " ms\n";
-
-    std::cout << "addmyfunc exit!" << std::endl;
+              << " ms\n"
+              << "qps :" << (double)total_count/std::chrono::duration_cast<std::chrono::seconds>(elapsed).count() << " /s"<<std::endl;
 }
 
 void lft_pool_test();
