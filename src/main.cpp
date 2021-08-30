@@ -48,9 +48,47 @@ void lft_pool_test() {
     th_pool.stop();
     th_pool.join();
 }
+void multi_add(void *args) {
+    lockfreepool::MultiToOne *th_pool = (lockfreepool::MultiToOne *) args;
+
+    auto start = std::chrono::high_resolution_clock::now();
+    int total_count = 10 * 10000;
+    for (int i = 0; i < total_count; ++i) {
+        TestTask* task = new TestTask;
+        if (!th_pool->add_work(task)) {
+            --i;
+            continue;
+        }
+    }
+
+    auto elapsed = std::chrono::high_resolution_clock::now() - start;
+    std::cout << "waited for "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count()
+              << " ms\n"
+              << "qps :" << (double)total_count/std::chrono::duration_cast<std::chrono::seconds>(elapsed).count() << " /s"<<std::endl;
+}
+
+void multi_to_one_test(){
+    lockfreepool::MultiToOne reduce_pool(10);
+    reduce_pool.start();
+    vector<std::thread> vec_ths;
+    vec_ths.resize(std::thread::hardware_concurrency());
+    for(int i = 0; i < vec_ths.size(); ++i){
+        std::thread th(multi_add, (void*)&reduce_pool);
+
+        vec_ths[i].swap(th);
+    }
+    for(auto&th : vec_ths){
+        th.join();
+    }
+
+    reduce_pool.stop();
+    reduce_pool.join();
+}
 
 int main(int argc, char**argv) {
 
     lft_pool_test();
+    multi_to_one_test();
 }
 

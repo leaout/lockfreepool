@@ -192,7 +192,7 @@ namespace lockfreepool{
         }
     private:
         CircleQueue<ITask> *get_queue(){
-            ThreadWithQueue *queue = nullptr;
+
             auto thread_id = get_current_thread_id();
             auto find_it = m_thread_queues.find(thread_id);
             if(find_it != m_thread_queues.end()){
