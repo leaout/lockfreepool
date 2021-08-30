@@ -12,6 +12,8 @@ class CircleBuffer{
 public:
     explicit CircleBuffer(size_t buffer_size): m_max_size(buffer_size* sizeof(T)){
         m_buffer = std::unique_ptr<T[]>(new T[buffer_size]);
+        m_head = m_buffer.get() + 1;
+        m_tail = m_buffer.get();
     }
     size_t read(T *out_buffer, size_t count){
         return 0;
@@ -29,8 +31,8 @@ public:
         return 0;
     }
 
-    void reset(){
-        m_head = m_buffer.get()+1;
+    void reset() {
+        m_head = m_buffer.get() + 1;
         m_tail = m_buffer.get();
     }
     bool empty() const{
