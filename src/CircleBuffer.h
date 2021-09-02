@@ -91,15 +91,15 @@ namespace lockfreepool{
                 if (available_size > count) {
                     return std::memcmp(in_buffer, m_tail, count * sizeof(T)) == 0;
                 } else {
-                    std::array<T> temp(count);
-                    std::memcpy(temp.data(), m_tail, available_size * sizeof(T));
+                    T temp[count];
+                    std::memcpy(temp, m_tail, available_size * sizeof(T));
 
                     int todo_size = count - available_size;
                     if (todo_size > 0) {
                         auto temp_tail = buffer_start;
-                        std::memcpy(temp.data() + available_size, temp_tail, todo_size * sizeof(T));
+                        std::memcpy(temp + available_size, temp_tail, todo_size * sizeof(T));
                     }
-                    return std::memcmp(in_buffer, temp.data(), count * sizeof(T)) == 0;
+                    return std::memcmp(in_buffer, temp, count * sizeof(T)) == 0;
                 }
             }
             return false;
@@ -137,6 +137,28 @@ namespace lockfreepool{
             m_tail = m_buffer.get();
             m_current_size = 0;
         }
+        bool erase(int count) const{
+            if (size() < count) {
+                return false;
+            }
+            if (m_head > m_tail) {
+                m_tail += count;
+            } else {
+                auto buffer_start = m_buffer.get();
+                auto buffer_end = m_buffer.get() + m_max_size + 1;
+                int available_size = buffer_end - m_tail;
+                if (available_size > count) {
+                    m_tail += count;
+                } else {
+                    m_tail = buffer_start;
+                    int todo_size = count - available_size;
+                    if (todo_size > 0) {
+                        m_tail += todo_size;
+                    }
+                }
+            }
+            return true;
+        }
         bool empty() const{
             return m_current_size == 0;
         }
@@ -162,8 +184,9 @@ namespace lockfreepool{
 
     class Msg{
     public:
-        
+
     private:
+        CircleBuffer<char> m_buffer;
     };
 }
 #endif //LOCKFREEPOOL_CIRCLEBUFFER_H

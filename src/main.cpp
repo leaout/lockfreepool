@@ -1,7 +1,7 @@
 #include <iostream>
 #include <atomic>
 #include "ThreadPool.h"
-
+#include "CircleBuffer.h"
 using namespace std;
 
 class TestTask :public ITask{
