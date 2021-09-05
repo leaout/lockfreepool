@@ -5,7 +5,7 @@ project(${PROJECT_NAME})
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
+#set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
 
 file(GLOB_RECURSE HEADERS *.h)
 source_group("Header Files" FILES ${HEADERS})
