@@ -14,3 +14,6 @@ aux_source_directory(./src DIR_SRCS)
 add_executable(${PROJECT_NAME} ${DIR_SRCS} ${HEADERS})  
 find_package(Threads)
 target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT})
+
+aux_source_directory(./benchmark DIR_BENCHMARK)
+add_executable(benchmark ${DIR_BENCHMARK})
