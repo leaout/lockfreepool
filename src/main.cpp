@@ -28,6 +28,7 @@ void addmyfunc(void *args) {
         TestTask* task = new TestTask;
         if (!th_pool->add_work(task)) {
             --i;
+            delete task;
             continue;
         }
     }
@@ -52,11 +53,12 @@ void multi_add(void *args) {
     lockfreepool::MultiToOne *th_pool = (lockfreepool::MultiToOne *) args;
 
     auto start = std::chrono::high_resolution_clock::now();
-    int total_count = 10 * 10000;
+    int total_count = 100 * 10000;
     for (int i = 0; i < total_count; ++i) {
         TestTask* task = new TestTask;
         if (!th_pool->add_work(task)) {
             --i;
+            delete task;
             continue;
         }
     }
@@ -69,7 +71,7 @@ void multi_add(void *args) {
 }
 
 void multi_to_one_test(){
-    lockfreepool::MultiToOne reduce_pool(10);
+    lockfreepool::MultiToOne reduce_pool(14);
     reduce_pool.start();
     vector<std::thread> vec_ths;
     vec_ths.resize(std::thread::hardware_concurrency());

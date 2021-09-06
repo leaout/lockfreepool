@@ -147,7 +147,7 @@ namespace lockfreepool{
 
         }
         bool start() {
-
+            m_running = true;
             //start worker
             thread th(&MultiToOne::thread_func,this);
             m_th.swap(th);
@@ -173,7 +173,7 @@ namespace lockfreepool{
             }
         }
         void thread_func(){
-            while (m_running ) {
+            while (m_running) {
                 for(auto&kv : m_thread_queues){
                     if (kv.second->queue_empty()) {
                         std::this_thread::sleep_for(chrono::milliseconds(1));
