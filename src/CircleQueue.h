@@ -22,6 +22,7 @@ class Slot {
 public:
     T *m_task = nullptr;
     char msg[32] = {};
+    //monitor task process status or control skip/stop
     atomic<TaskStatus> m_status;
 };
 
@@ -31,10 +32,10 @@ public:
     CircleQueue() = delete;
 
     explicit CircleQueue(uint32_t power) : m_head(0), m_tail(0),
-                                                m_ntask_size(0) {
-        m_nqueue_size = 1 << power;
-        m_nqueue_mask = m_nqueue_size - 1;
-        m_queue = new Slot<T>[m_nqueue_size];
+                                           m_task_size(0) {
+        m_queue_size = 1 << power;
+        m_nqueue_mask = m_queue_size - 1;
+        m_queue = new Slot<T>[m_queue_size];
     }
 
     ~CircleQueue() {
@@ -43,7 +44,7 @@ public:
     }
 
     uint32_t get_task_size() {
-        return m_ntask_size;
+        return m_task_size;
     }
 
     bool queue_empty() {
@@ -51,7 +52,7 @@ public:
     }
 
     bool queue_full() {
-        return (get_task_size() == m_nqueue_size);
+        return (get_task_size() == m_queue_size);
     }
 
     T *prefetch_one(TaskStatus &status) {
@@ -75,7 +76,7 @@ public:
         slot.m_status = TaskStatus::Free;
 
         slot.m_task = nullptr;
-        --m_ntask_size;
+        --m_task_size;
         m_tail = val_offset(++m_tail);
 
         return ;
@@ -94,7 +95,7 @@ public:
         T *ret = slot.m_task;
 
         slot.m_task = nullptr;
-        --m_ntask_size;
+        --m_task_size;
         m_tail = val_offset(++m_tail);
         return ret;
     }
@@ -108,7 +109,7 @@ public:
         slot.m_task = task;
         slot.m_status = TaskStatus::Pending;
 
-        ++m_ntask_size;
+        ++m_task_size;
         m_head = val_offset(++m_head);
         return true;
     }
@@ -121,8 +122,8 @@ private:
 public:
     volatile uint32_t m_head;
     volatile uint32_t m_tail;
-    atomic_int m_ntask_size;
-    atomic_int m_nqueue_size;
+    atomic_int m_task_size;
+    atomic_int m_queue_size;
     uint32_t m_nqueue_mask;
 
     Slot<T> *m_queue = nullptr;
