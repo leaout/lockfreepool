@@ -17,3 +17,4 @@ target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT})
 
 aux_source_directory(./benchmark DIR_BENCHMARK)
 add_executable(benchmark ${DIR_BENCHMARK})
+target_link_libraries(benchmark ${CMAKE_THREAD_LIBS_INIT})
