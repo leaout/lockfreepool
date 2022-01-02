@@ -11,13 +11,15 @@
 
 class Stat {
 public:
+    Stat():m_done(0){}
     void finished_single_op() {
         m_done++;
         if (m_done >= m_next_report) {
 
             m_next_report += 500000;
 
-            std::fprintf(stderr, "... finished %d ops%30s\r", m_done.load(), "");
+            int count = m_done.load();
+            std::fprintf(stderr, "... finished %d ops\r",count );
             std::fflush(stderr);
         }
     }
