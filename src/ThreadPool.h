@@ -173,10 +173,16 @@ namespace lockfreepool{
             }
         }
         void thread_func(){
+            int sleep_counter = 0;
+            int thread_count = std::thread::hardware_concurrency();
             while (m_running) {
                 for(auto&kv : m_thread_queues){
                     if (kv.second->queue_empty()) {
-                        std::this_thread::sleep_for(chrono::milliseconds(1));
+                        if (++sleep_counter >= thread_count) {
+                            std::this_thread::yield();
+                            sleep_counter = 0;
+                        }
+
                         continue;
                     }
                     TaskStatus status = TaskStatus::Skip;
