@@ -211,7 +211,7 @@ namespace lockfreepool{
         T *m_buffer_start;
         T *m_buffer_end;
         size_t m_max_size;
-        volatile size_t m_current_size;
+        std::atomic<size_t> m_current_size;
     };
 
     class Msg{

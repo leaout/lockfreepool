@@ -159,7 +159,7 @@ void circle_buffer_test (){
             if (circle_buf.read(buff, 14)) {
                 read_times += 14;
             } else {
-                std::this_thread::sleep_for(std::chrono::microseconds(50));
+                std::this_thread::sleep_for(std::chrono::milliseconds (50));
             }
 
 //            std::cout << "read:"<<buff << std::endl;
