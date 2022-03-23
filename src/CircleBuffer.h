@@ -15,7 +15,7 @@ namespace lockfreepool{
     template <class T>
     class CircleBuffer{
     public:
-        explicit CircleBuffer(size_t buffer_size) : m_max_size(buffer_size * sizeof(T)),
+        explicit CircleBuffer(size_t buffer_size) : m_max_size(buffer_size),
                                                     m_current_size(0) {
             m_buffer = std::unique_ptr<T[]>(new T[buffer_size]);
             m_head = m_buffer.get();
@@ -30,7 +30,7 @@ namespace lockfreepool{
             }
             assert(m_tail <= m_buffer_end);
             if (m_head > m_tail) {
-                std::memcpy(out_buffer, (T*)m_tail, count * sizeof(T));
+                std::memcpy(out_buffer, (T*)m_tail, count);
                 m_tail += count;
                 assert(m_tail <= m_buffer_end);
             } else {
@@ -38,16 +38,16 @@ namespace lockfreepool{
                 auto buffer_end = m_buffer.get() + m_max_size;
                 int available_size = buffer_end - m_tail;
                 if (available_size > count) {
-                    std::memcpy(out_buffer, (T*)m_tail, count * sizeof(T));
+                    std::memcpy(out_buffer, (T*)m_tail, count);
                     m_tail += count;
                     assert(m_tail <= m_buffer_end);
                 } else {
-                    std::memcpy(out_buffer, (T*)m_tail, available_size * sizeof(T));
+                    std::memcpy(out_buffer, (T*)m_tail, available_size);
                     auto buffer_start = m_buffer.get();
                     m_tail = buffer_start;
                     int todo_size = count - available_size;
                     if (todo_size > 0) {
-                        std::memcpy(out_buffer+available_size, (T*)m_tail, todo_size * sizeof(T));
+                        std::memcpy(out_buffer+available_size, (T*)m_tail, todo_size);
                         m_tail += todo_size;
                         assert(m_tail <= m_buffer_end);
                         assert(m_tail <= m_head);
@@ -67,17 +67,16 @@ namespace lockfreepool{
 
                 int available_size = m_buffer_end - m_head;
                 if (available_size > count) {
-                    std::memcpy((T*)m_head, in_buffer, count * sizeof(T));
+                    std::memcpy((T*)m_head, in_buffer, count);
                     m_head += count;
                     assert(m_head <= m_buffer_end);
                 } else {
-                    std::memcpy((T*)m_head, in_buffer, available_size * sizeof(T));
-                    auto buffer_start = m_buffer.get();
-                    m_head = buffer_start;
+                    std::memcpy((T*)m_head, in_buffer, available_size);
+                    m_head = m_buffer_start;
                     int todo_size = count - available_size;
                     int new_available_size = m_tail - m_head;
                     if (todo_size <= new_available_size) {
-                        std::memcpy((T*)m_head, in_buffer + available_size, todo_size * sizeof(T));
+                        std::memcpy((T*)m_head, in_buffer + available_size, todo_size);
                         m_head += todo_size;
                         assert(m_head <= m_buffer_end);
                     } else{
@@ -88,17 +87,17 @@ namespace lockfreepool{
             } else {
                 int available_size = m_buffer_end - m_head;
                 if(available_size > count){
-                    std::memcpy((T *) m_head, in_buffer, count * sizeof(T));
+                    std::memcpy((T *) m_head, in_buffer, count);
                     m_head += count;
                     assert(m_head <= m_buffer_end);
                 } else{
-                    std::memcpy((T*)m_head, in_buffer, available_size * sizeof(T));
+                    std::memcpy((T*)m_head, in_buffer, available_size);
 
                     m_head = m_buffer_start;
                     int todo_size = count - available_size;
                     int new_available_size = m_tail - m_head;
                     if (todo_size <= new_available_size) {
-                        std::memcpy((T*)m_head, in_buffer + available_size, todo_size * sizeof(T));
+                        std::memcpy((T*)m_head, in_buffer + available_size, todo_size);
                         m_head += todo_size;
                         assert(m_head <= m_buffer_end);
                     } else{
@@ -212,7 +211,7 @@ namespace lockfreepool{
         T *m_buffer_start;
         T *m_buffer_end;
         size_t m_max_size;
-        std::atomic<size_t> m_current_size;
+        volatile size_t m_current_size;
     };
 
     class Msg{

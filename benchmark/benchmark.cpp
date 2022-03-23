@@ -132,28 +132,37 @@ void multi_to_one_test(){
     print_result(__FUNCTION__,time_cost, thread_meta.stat);
 }
 void circle_buffer_test (){
-    lockfreepool::CircleBuffer<char> circle_buf(111);
+    lockfreepool::CircleBuffer<char> circle_buf(1024*1024*50);
     size_t write_times = 0;
     size_t read_times = 0;
     std::thread th1([&](){
+        auto start = std::chrono::high_resolution_clock::now();
         while(true){
-            if(circle_buf.write("1234567890abcd",14)){
-                write_times += 14;
-            }
 
+            if(circle_buf.write("1234567890abcd",14)){
+                ++write_times;
+            }
+            if(write_times >= 100000000){
+                auto elapsed = std::chrono::high_resolution_clock::now() - start;
+                int time_cost = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+                std::cout << "time_cost:" << time_cost << " qps:"<< 100000000/(double)time_cost*1000 << std::endl;
+                break;
+            }
 //            std::this_thread::sleep_for(std::chrono::microseconds(50));
         }
 
     });
-    std::thread th2([&](){
-        while(true){
-//            std::this_thread::sleep_for(std::chrono::microseconds(50));
+    std::thread th2([&]() {
+        while (true) {
+
             char buff[20] = {};
-            if(circle_buf.read(buff,14)){
+            if (circle_buf.read(buff, 14)) {
                 read_times += 14;
+            } else {
+                std::this_thread::sleep_for(std::chrono::microseconds(50));
             }
 
-            std::cout << "read:"<<buff << std::endl;
+//            std::cout << "read:"<<buff << std::endl;
         }
 
     });
@@ -165,6 +174,6 @@ void circle_buffer_test (){
 int main(int argc, char *argv[]) {
     lft_pool_test();
     multi_to_one_test();
-//    circle_buffer_test();
+    circle_buffer_test();
     return 0;
 }
