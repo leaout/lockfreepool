@@ -8,6 +8,7 @@
 
 #include "../src/ThreadPool.h"
 #include "../src/ThreadPool.h"
+#include "../src/CircleBuffer.h"
 
 class Stat {
 public:
@@ -130,9 +131,40 @@ void multi_to_one_test(){
 
     print_result(__FUNCTION__,time_cost, thread_meta.stat);
 }
+void circle_buffer_test (){
+    lockfreepool::CircleBuffer<char> circle_buf(111);
+    size_t write_times = 0;
+    size_t read_times = 0;
+    std::thread th1([&](){
+        while(true){
+            if(circle_buf.write("1234567890abcd",14)){
+                write_times += 14;
+            }
+
+//            std::this_thread::sleep_for(std::chrono::microseconds(50));
+        }
+
+    });
+    std::thread th2([&](){
+        while(true){
+//            std::this_thread::sleep_for(std::chrono::microseconds(50));
+            char buff[20] = {};
+            if(circle_buf.read(buff,14)){
+                read_times += 14;
+            }
+
+            std::cout << "read:"<<buff << std::endl;
+        }
+
+    });
+    th1.join();
+    th2.join();
+
+};
 
 int main(int argc, char *argv[]) {
     lft_pool_test();
     multi_to_one_test();
+//    circle_buffer_test();
     return 0;
 }
