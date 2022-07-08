@@ -5,6 +5,7 @@
 #include <iostream>
 #include <atomic>
 #include <iomanip>
+#include <random>
 
 #include "../src/ThreadPool.h"
 #include "../src/ThreadPool.h"
@@ -133,42 +134,51 @@ void multi_to_one_test(){
 }
 void circle_buffer_test (){
     lockfreepool::CircleBuffer<char> circle_buf(1024*1024*50);
-    size_t write_times = 0;
-    size_t read_times = 0;
+    size_t write_len = 0;
+    size_t read_len = 0;
+    bool exit = false;
+    std::random_device rd;  // 将用于为随机数引擎获得种子
+    std::mt19937 gen(rd()); // 以播种标准 mersenne_twister_engine
+    std::uniform_int_distribution<> dis(0, 14);
     std::thread th1([&](){
         auto start = std::chrono::high_resolution_clock::now();
+        std::size_t counter = 0;
+        std::size_t send_times = 10000*1000;
         while(true){
-
-            if(circle_buf.write("1234567890abcd",14)){
-                ++write_times;
+            auto send_len = dis(gen);
+            if(circle_buf.write("1234567890abcd",send_len)){
+                write_len += send_len;
             }
-            if(write_times >= 100000000){
+            if(++counter >= send_times){
                 auto elapsed = std::chrono::high_resolution_clock::now() - start;
                 int time_cost = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-                std::cout << "time_cost:" << time_cost << " qps:"<< 100000000/(double)time_cost*1000 << std::endl;
+                std::cout << "time_cost:" << time_cost << " qps:"<< send_times/(double)time_cost*1000 << std::endl;
+                exit = true;
                 break;
             }
-//            std::this_thread::sleep_for(std::chrono::microseconds(50));
         }
 
     });
     std::thread th2([&]() {
+        char buff[20] = {};
         while (true) {
-
-            char buff[20] = {};
-            if (circle_buf.read(buff, 14)) {
-                read_times += 14;
+            auto read_size = circle_buf.read_all(buff, 20);
+            if (read_size > 0) {
+                read_len += read_size;
             } else {
-                std::this_thread::sleep_for(std::chrono::milliseconds (50));
+                std::this_thread::yield();
             }
-
-//            std::cout << "read:"<<buff << std::endl;
+            if(exit && circle_buf.empty()){
+                break;
+            }
         }
 
     });
     th1.join();
     th2.join();
 
+    std::cout << "write_len:"<<write_len << std::endl;
+    std::cout << "read_len:"<<read_len << std::endl;
 };
 
 int main(int argc, char *argv[]) {

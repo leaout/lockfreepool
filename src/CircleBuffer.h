@@ -57,6 +57,42 @@ namespace lockfreepool{
             m_current_size -= count;
             return true;
         }
+        size_t read_all(T *out_buffer, size_t buffer_size) {
+            auto now_available_size = size();
+            size_t read_size = now_available_size < buffer_size? now_available_size:buffer_size;
+            if (read_size <= 0) {
+                return 0;
+            }
+
+            assert(m_tail <= m_buffer_end);
+            if (m_head > m_tail) {
+                std::memcpy(out_buffer, (T*)m_tail, read_size);
+                m_tail += read_size;
+                assert(m_tail <= m_buffer_end);
+            } else {
+
+                auto buffer_end = m_buffer.get() + m_max_size;
+                int available_size = buffer_end - m_tail;
+                if (available_size > read_size) {
+                    std::memcpy(out_buffer, (T*)m_tail, read_size);
+                    m_tail += read_size;
+                    assert(m_tail <= m_buffer_end);
+                } else {
+                    std::memcpy(out_buffer, (T*)m_tail, available_size);
+                    auto buffer_start = m_buffer.get();
+                    m_tail = buffer_start;
+                    int todo_size = read_size - available_size;
+                    if (todo_size > 0) {
+                        std::memcpy(out_buffer+available_size, (T*)m_tail, todo_size);
+                        m_tail += todo_size;
+                        assert(m_tail <= m_buffer_end);
+                        assert(m_tail <= m_head);
+                    }
+                }
+            }
+            m_current_size -= read_size;
+            return read_size;
+        }
 
         bool write(const T *in_buffer, size_t count){
             if(capacity() < count){
