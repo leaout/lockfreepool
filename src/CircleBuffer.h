@@ -202,7 +202,7 @@ namespace lockfreepool{
             m_tail = m_buffer.get();
             m_current_size = 0;
         }
-        bool erase(int count) const{
+        bool erase(int count) {
             if (size() < count) {
                 return false;
             }
