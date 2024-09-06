@@ -65,9 +65,9 @@ void addfunc_thread(void *args) {
 }
 
 int main(int argc, char**argv) {
-    CThreadPool th_poll;
-    th_poll.init(6, ScheduleType::LEAST_LOAD, 10);
-    std::thread th(addfunc_thread, (void*)&th_poll);
+    CThreadPool th_pool;
+    th_pool.init(6, ScheduleType::LEAST_LOAD, 10);
+    std::thread th(addfunc_thread, (void*)&th_pool);
     th.join();
 
     th_poll.stop();
